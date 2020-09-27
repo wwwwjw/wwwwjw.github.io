@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#3367D6"/>
+  <link rel="apple-touch-icon" href="/icons-192.png">
+  <link rel="manifest" href="/manifest.json">
+
+  
+
+  
+
+  
+    <meta name="author" content="wujiawen">
+  
+
+  
+
+  
+
+  <title>JS-promise源码解析理解 | 绝对没有空的</title>
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+    <link href="https://cdn.bootcss.com/highlight.js/9.15.6/styles/monokai.min.css" rel="stylesheet">
+  
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 5.1.1"></head>
+<body>
+  <div class="root-container">
+    <!-- navbar -->
+<nav class="navbar">
+  <div class="navbar-content">
+    <!-- logo -->
+    <div class="navbar-logo">
+      <a href="/">
+        
+          绝对没有空的
+        
+      </a>
+    </div>
+    <!-- link -->
+    <div class="navbar-link">
+      <div class="navbar-btn">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <ul class="navbar-list">
+        
+          <li class="navbar-list-item"><a href="/">首页</a></li>
+        
+          <li class="navbar-list-item"><a href="/tags">标签</a></li>
+        
+          <li class="navbar-list-item"><a href="/categories">分类</a></li>
+        
+          <li class="navbar-list-item"><a href="/links">友链</a></li>
+        
+          <li class="navbar-list-item"><a href="/about">关于</a></li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    
+<!-- header container -->
+<header class="header-container post">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+    <div class="header-content">
+      <div class="post-image" style="background-image: url(/images/18.jpg)"></div>
+      <div class="post-text">
+        <div class="type-wrap">
+          <a class="article-category-link" href="/categories/JS/">JS</a>
+        </div>
+        <h1 class="title-wrap">JS-promise源码解析理解</h1>
+        <h2 class="title-sub-wrap">
+          <strong>wujiawen</strong>
+          <span>发布于</span>
+          
+  <a href="javascript:;" class="article-date">
+    <time datetime="2020-09-23T09:51:52.623Z" itemprop="datePublished">2020-09-23</time>
+  </a>
+
+        </h2>
+      </div>
+    </div>
+  
+
+  
+  
+
+  </header>
+
+    <!-- 文章 -->
+
+<!-- 文章内容 -->
+
+<div class="body-container">
+  <article class="content-container article-container">
+    <div class="article-content">
+      
+      
+
+      <section class="article-entry">
+        <h2 id="Promise源码解析"><a href="#Promise源码解析" class="headerlink" title="Promise源码解析"></a>Promise源码解析</h2><ul>
+<li><p><strong>关键点记录</strong><br>如何通过then()实现将异步结果返回<br>原理：<br>通过三种状态判断异步操作是否已经执行成功</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs javaScript"><span class="hljs-keyword">const</span> PENDING = <span class="hljs-string">&#x27;pending&#x27;</span>; <span class="hljs-comment">//初始状态</span><br><span class="hljs-keyword">const</span> FULFILLED = <span class="hljs-string">&#x27;fulfilled&#x27;</span>; <span class="hljs-comment">// 成功状态</span><br><span class="hljs-keyword">const</span> REJECTED = <span class="hljs-string">&#x27;rejected&#x27;</span>; <span class="hljs-comment">// 失败状态</span><br></code></pre></td></tr></table></figure>
+<p>通过成功回调的数组onResolveCallbacks，以及失败回调的数组onRejectedCallbacks 存放then()方法接收的回调函数<br>执行then()方法之后，如果状态是 pending，则存入回调数组中<br>在异步执行完成后，会调用 resolve 以及 reject，此时，会相应改变状态以及调用回调数组中的回调方法，达到在异步操作完成后执行回调的结果<br>then() 会返回 promise 对象</p>
+</li>
+<li><p><strong>then()方法需要生成微任务</strong></p>
+</li>
+<li><p><strong>ES6中的promise实现</strong><br>微任务的生成是按照执行环境的不同而使用不同的生成方式<br>附上生成部分的源码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs javaScript"><span class="hljs-keyword">let</span> scheduleFlush<br><span class="hljs-comment">// Decide what async method to use to triggering processing of queued callbacks:</span><br><span class="hljs-keyword">if</span> (isNode) &#123; <span class="hljs-comment">// node环境 使用 process.nextTick()</span><br>  scheduleFlush = useNextTick()<br>&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (BrowserMutationObserver) &#123;<br>  scheduleFlush = useMutationObserver() <span class="hljs-comment">// 浏览器环境 使用MutaionObserver()</span><br>&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (isWorker) &#123;<br>  scheduleFlush = useMessageChannel()<br>&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (browserWindow === <span class="hljs-literal">undefined</span> &amp;&amp; <span class="hljs-keyword">typeof</span> <span class="hljs-built_in">require</span> === <span class="hljs-string">&#x27;function&#x27;</span>) &#123;<br>  scheduleFlush = attemptVertx()<br>&#125; <span class="hljs-keyword">else</span> &#123;<br>  scheduleFlush = useSetTimeout() <span class="hljs-comment">// 无法判断环境 使用 setTimeout()</span><br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>promise链式调用</strong><br>promise.then()返回一个promise对象<br>在then()方法里面，return promise2 = new Promise((resolve, reject) =&gt; {})<br>会先调用promise1的then()方法传入的回调函数 调用完成后，将调用结果 x 作为promise2的值 resolve(x)</p>
+</li>
+<li><p><strong>promise.all()</strong><br>返回一个promise，resolve 一个结果数组<br>接收一个数组<br>对数组每一项进行判断并处理，若是普通值，则直接存放在 result 中，若是promise，则调用 then() 方法，将结果存放到result<br>并且，result 的顺序严格按照传入参数数组的顺序（在对参数数组进行遍历操作时，会把下标传递给结果处理函数，存放到 result 的对应位置）</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs javaScript"><span class="hljs-comment">// 封装 Promise.all方法</span><br><span class="hljs-built_in">Promise</span>.all = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">values</span>) </span>&#123;<br>  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>(<span class="hljs-function">(<span class="hljs-params">resolve, reject</span>) =&gt;</span> &#123;<br>      <span class="hljs-keyword">let</span> result = [] <span class="hljs-comment">// 存放返回值</span><br>      <span class="hljs-keyword">let</span> counter = <span class="hljs-number">0</span> <span class="hljs-comment">// 计数器，用于判断异步完成</span><br>      <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">processData</span>(<span class="hljs-params">key, value</span>) </span>&#123;<br>          result[key] = value<br>          <span class="hljs-comment">// 每成功一次计数器就会加1，直到所有都成功的时候会与values长度一致，则认定为都成功了，所以能避免异步问题</span><br>          <span class="hljs-keyword">if</span> (++counter === values.length) &#123;<br>              resolve(result)<br>          &#125;<br>      &#125;<br>      <span class="hljs-comment">// 遍历 数组中的每一项，判断传入的是否是promise</span><br>      <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; values.length; i++) &#123;<br>          <span class="hljs-keyword">let</span> current = values[i]<br>          <span class="hljs-comment">// 如果是promise则调用获取data值，然后再处理data</span><br>          <span class="hljs-keyword">if</span> (isPromise(current)) &#123;<br>              current.then(<span class="hljs-function"><span class="hljs-params">data</span> =&gt;</span> &#123;<br>                  processData(i, data)<br>              &#125;, reject)<br>          &#125; <span class="hljs-keyword">else</span> &#123;<br>              <span class="hljs-comment">// 如果不是promise，传入的是普通值，则直接返回</span><br>              processData(i, current)<br>          &#125;<br>      &#125;<br>  &#125;)<br>&#125;<br></code></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h4 id="promise简单总结记忆"><a href="#promise简单总结记忆" class="headerlink" title="promise简单总结记忆"></a>promise简单总结记忆</h4><p>  链式调用需要等待上一个 then() 的微任务完成才会进行注册<br>  若有上一个 then() return 则下一个 then() 需要等 return的内容执行完成才进行注册</p>
+<p>  参考：<br>  <a target="_blank" rel="noopener" href="https://github.com/xieranmaya/blog/issues/3">https://github.com/xieranmaya/blog/issues/3</a></p>
+<p>  检测（是否理解）：<br>  <a target="_blank" rel="noopener" href="https://blog.csdn.net/lqyygyss/article/details/102662606">https://blog.csdn.net/lqyygyss/article/details/102662606</a></p>
+<p>  Promise/A+ 规范(中文版)：<br>  <a target="_blank" rel="noopener" href="https://www.icode9.com/content-4-365156.html">https://www.icode9.com/content-4-365156.html</a></p>
+
+      </section>
+
+      <section class="article-footer">
+        <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/promise%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/" rel="tag">#promise源码解析</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%90%86%E8%A7%A3/" rel="tag">#理解</a></li></ul>
+      </section>
+
+      <section class="article-navs">
+        
+<nav class="card-container card-article-nav">
+  <div class="card-wrap">
+    
+      <div id="article-nav-newer" class="card-item img">
+        <article>
+          
+            <div class="card-cover" style="background-image: url(/images/15.jpg)"></div>
+          
+          <a class="card-link article-nav-link" href="/2020/09/23/JS-%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF%E7%90%86%E8%A7%A3/"></a>
+          <strong class="article-nav-caption">上一篇</strong>
+          <p class="article-nav-title">
+            
+              JS-事件循环理解
+            
+          </p>
+        </article>
+      </div>
+    
+    
+      <div id="article-nav-older" class="card-item img">
+        <article>
+          
+            <div class="card-cover" style="background-image: url(/images/13.jpg)"></div>
+          
+          <a class="card-link article-nav-link" href="/2020/09/23/JS-%E5%87%BD%E6%95%B0&amp;%E5%8F%98%E9%87%8F%E5%AE%9A%E4%B9%89/"></a>
+          <strong class="article-nav-caption">下一篇</strong>
+          <p class="article-nav-title">
+            
+              JS-函数&amp;变量定义
+            
+          </p>
+        </article>
+      </div>
+    
+  </div>
+</nav>
+
+      </section>
+
+      
+
+  
+  
+  <div class="valine-container">
+    <div id="valine_thread" class="valine-thread"></div>
+  </div>
+  
+
+  
+  
+
+
+    </div>
+  </article>
+</div>
+
+    <!-- footer container -->
+<footer id="footer" class="footer">
+  <div class="footer-container">
+     
+    <p>&copy; 2020 <a href="/" target="_blank">wujiawen</a></p>
+
+    
+      <p id="hitokoto"></p>
+      <script src="https://v1.hitokoto.cn/?c=a&amp;encode=js&select=%23hitokoto" defer></script>
+    
+
+    
+
+    <p>Powered by <a href="https://hexo.io" target="_blank" rel="noopener noreferrer">Hexo</a> Theme - <a href="https://github.com/miiiku/flex-block" target="_blank" rel="noopener noreferrer author">flex-block</a></p>
+  </div>
+</footer>
+  </div>
+
+  <div class="back-to-top-fixed">
+    <svg class="icon icon-back-to-top" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M725.333333 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8l-213.333333-213.333333c-17.066667-17.066667-17.066667-42.666667 0-59.733333s42.666667-17.066667 59.733333 0l213.333333 213.333333c17.066667 17.066667 17.066667 42.666667 0 59.733333C746.666667 422.4 738.133333 426.666667 725.333333 426.666667z"></path>
+  <path d="M298.666667 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8-17.066667-17.066667-17.066667-42.666667 0-59.733333l213.333333-213.333333c17.066667-17.066667 42.666667-17.066667 59.733333 0s17.066667 42.666667 0 59.733333l-213.333333 213.333333C320 422.4 311.466667 426.666667 298.666667 426.666667z"></path>
+  <path d="M512 896c-25.6 0-42.666667-17.066667-42.666667-42.666667L469.333333 170.666667c0-25.6 17.066667-42.666667 42.666667-42.666667s42.666667 17.066667 42.666667 42.666667l0 682.666667C554.666667 878.933333 537.6 896 512 896z"></path>
+</svg> 
+  </div>
+
+  
+  
+<!-- valine 评论 start -->
+<script type="text/javascript" src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script type="text/javascript" src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script type="text/javascript">
+  new Valine({
+    el: "#valine_thread",
+    appId: "WznapURtFJOd5hb4QxotflLi-gzGzoHsz",
+    appKey: "PlcFdvPHPaWaAtx1Qh7vqEO9",
+    avatar: "robohash",
+    placeholder: "随便说点什么叭～",
+    notify: ,
+    visitor: true,
+    pageSize: 10,
+  });
+</script>
+<!-- valine 评论 end -->
+
+
+
+  <!-- aplayer 音频 start -->
+  <link rel="stylesheet" href="https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.css">
+  <script type="text/javascript" src="https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.js"></script>
+  <script type="text/javascript">
+    const aplayer = document.querySelectorAll(".aplayer");
+    aplayer && initaplayer(aplayer);
+    function initaplayer(els) {
+      let elsArr = Array.from(els);
+      elsArr.forEach(el => {
+        new APlayer({
+          container: el,
+          audio: { ...el.dataset },
+          theme: "#b7daff",
+          lrcType: 3,
+          autoplay: false,
+          loop: false,
+          mutex: true,
+        });
+      });
+    }
+  </script>
+  <!-- aplayer 音频 end -->
+  
+
+<!-- dplayer 视频 start -->
+<script type="text/javascript" src="https://unpkg.com/dplayer@1.25.1/dist/DPlayer.min.js"></script>
+<script type="text/javascript">
+  const dplayer = document.querySelectorAll(".dplayer");
+  dplayer && initDPlayer(dplayer);
+  function initDPlayer(els) {
+    let elsArr = Array.from(els);
+    elsArr.forEach(el => {
+      let url = el.dataset.url;
+      let cover = el.dataset.cover;
+      let subtitle = el.dataset.subtitle;
+
+      let options = {
+        container: el,
+        video: { url: url, pic: cover },
+        theme: "#b7daff",
+        autoplay: true,
+        loop: true,
+        mutex: true,
+      }
+
+      if (subtitle) {
+        options.subtitle = {
+          url: el.dataset.subtitle,
+        }
+      }
+      new DPlayer(options);
+    });
+  }
+</script>
+<!-- dplayer 视频 end -->
+
+
+<!-- waterfall 瀑布流 start -->
+
+<script src="/lib/waterfall.min.js"></script>
+
+<script type="text/javascript">
+
+const waterfalls = document.querySelectorAll(".waterfall-container");
+
+if (waterfalls && waterfalls.length > 0) {
+  waterfalls.forEach((waterfall, index) => {
+    let cls = "waterfall-container-" + index;
+    waterfall.classList.add(cls);
+    initWaterfall(cls, waterfall);
+  });
+}
+
+function initWaterfall(selector, el) {
+  const options = {};
+  if (Object.keys(el.dataset).length > 0) {
+    for (let k in el.dataset) {
+      options[k] = el.dataset[k];
+    }
+  }
+  waterfall(`.${selector}`, options);
+}
+</script>
+<!-- waterfall 瀑布流 end -->
+
+
+  <!-- zoom start -->
+  
+<script src="/lib/zoom.min.js"></script>
+
+  <script type="text/javascript">
+    document.querySelector(".article-content") && zoom(".article-content");
+  </script>
+  <!-- zoom end -->
+  
+
+
+
+  
+
+
+  
+
+
+  
+
+
+
+
+<script src="/js/script.js"></script>
+
+  
+  <!-- 尾部用户自定义相关内容 -->
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":false},"log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>

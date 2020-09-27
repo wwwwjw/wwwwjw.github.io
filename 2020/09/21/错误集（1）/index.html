@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#3367D6"/>
+  <link rel="apple-touch-icon" href="/icons-192.png">
+  <link rel="manifest" href="/manifest.json">
+
+  
+
+  
+
+  
+    <meta name="author" content="wujiawen">
+  
+
+  
+
+  
+
+  <title>错误集-vue表单验证-计算属性 | 绝对没有空的</title>
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+    <link href="https://cdn.bootcss.com/highlight.js/9.15.6/styles/monokai.min.css" rel="stylesheet">
+  
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 5.1.1"></head>
+<body>
+  <div class="root-container">
+    <!-- navbar -->
+<nav class="navbar">
+  <div class="navbar-content">
+    <!-- logo -->
+    <div class="navbar-logo">
+      <a href="/">
+        
+          绝对没有空的
+        
+      </a>
+    </div>
+    <!-- link -->
+    <div class="navbar-link">
+      <div class="navbar-btn">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <ul class="navbar-list">
+        
+          <li class="navbar-list-item"><a href="/">首页</a></li>
+        
+          <li class="navbar-list-item"><a href="/tags">标签</a></li>
+        
+          <li class="navbar-list-item"><a href="/categories">分类</a></li>
+        
+          <li class="navbar-list-item"><a href="/links">友链</a></li>
+        
+          <li class="navbar-list-item"><a href="/about">关于</a></li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    
+<!-- header container -->
+<header class="header-container post">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+    <div class="header-content">
+      <div class="post-image" style="background-image: url(/images/10.jpg)"></div>
+      <div class="post-text">
+        <div class="type-wrap">
+          <a class="article-category-link" href="/categories/%E9%94%99%E8%AF%AF%E9%9B%86/">错误集</a>
+        </div>
+        <h1 class="title-wrap">错误集-vue表单验证-计算属性</h1>
+        <h2 class="title-sub-wrap">
+          <strong>wujiawen</strong>
+          <span>发布于</span>
+          
+  <a href="javascript:;" class="article-date">
+    <time datetime="2020-09-21T02:16:05.950Z" itemprop="datePublished">2020-09-21</time>
+  </a>
+
+        </h2>
+      </div>
+    </div>
+  
+
+  
+  
+
+  </header>
+
+    <!-- 文章 -->
+
+<!-- 文章内容 -->
+
+<div class="body-container">
+  <article class="content-container article-container">
+    <div class="article-content">
+      
+      
+
+      <section class="article-entry">
+        <h2 id="表单验证"><a href="#表单验证" class="headerlink" title="表单验证"></a>表单验证</h2><h4 id="能够校验的前提"><a href="#能够校验的前提" class="headerlink" title="能够校验的前提"></a>能够校验的前提</h4><ul>
+<li><p>被校验字段必须在formData中</p>
+<h4 id="自定义校验方法"><a href="#自定义校验方法" class="headerlink" title="自定义校验方法"></a>自定义校验方法</h4></li>
+<li><p>当使用自定义检验规则时，自定义校验规则 validator 的 callback() 必须被调用 </p>
+</li>
+<li><p>如果使用了 if else 则每层都要调用 callback()，否则表单的校验方法 this.$refs[formName].validate((boolean, obj) =&gt; {}) 不会执行 （ boolean 表示校验是否通过，object 为未通过字段 ）</p>
+<h4 id="对table的每一行单独做校验"><a href="#对table的每一行单独做校验" class="headerlink" title="对table的每一行单独做校验"></a>对table的每一行单独做校验</h4></li>
+<li><p>tableData必须在formData中，绑定prop，格式应为：:prop=”tableData.scope.$index.key” 绑定rules, :rules=”rules.key”</p>
+</li>
+<li><p>自定义校验方法中， 根据勾选的行进行判断，勾选了才进行校验，否则直接 callback()</p>
+</li>
+<li><p>判断该行是否勾选：table 的 @selection-change 中会以数组形式保存勾选的内容，根据此数组内容与tableData进行比对，找到每一个勾选内容的行标，<br>再与 validator (rule, value, callback) 中 的 rule (值为prop中绑定的 tableData.scope.$index.key) 的index 进行比对 判断该行是否有被勾选</p>
+</li>
+<li><p>需要注意的一点 这种方法 校验提示会被table挡住 需要将 错误提示的类 el-form-item .el-form-item__content .el-form-item__error 设置为 position: relative</p>
+</li>
+</ul>
+<h2 id="计算属性"><a href="#计算属性" class="headerlink" title="计算属性"></a>计算属性</h2><ul>
+<li><p>计算属性依赖于响应式属性，只有当被依赖的属性发生变化，计算属性的值才会真正改变 因为计算属性存在缓存 被依赖的属性不变时，不会触发getter</p>
+</li>
+<li><p>要修改计算属性的值，必须通过setter 否则 获取时会报错 set中将计算属性的新值赋给被依赖的属性 set(val)</p>
+</li>
+</ul>
+
+      </section>
+
+      <section class="article-footer">
+        <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/vue%E8%A1%A8%E5%8D%95%E9%AA%8C%E8%AF%81/" rel="tag">#vue表单验证</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E5%B1%9E%E6%80%A7/" rel="tag">#计算属性</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E9%94%99%E8%AF%AF%E9%9B%86/" rel="tag">#错误集</a></li></ul>
+      </section>
+
+      <section class="article-navs">
+        
+<nav class="card-container card-article-nav">
+  <div class="card-wrap">
+    
+      <div id="article-nav-newer" class="card-item img">
+        <article>
+          
+            <div class="card-cover" style="background-image: url(/images/6.jpg)"></div>
+          
+          <a class="card-link article-nav-link" href="/2020/09/21/%E6%95%B0%E7%BB%84%E5%AD%97%E7%AC%A6%E4%B8%B2-%E6%96%B9%E6%B3%95%E5%BD%92%E7%BA%B3/"></a>
+          <strong class="article-nav-caption">上一篇</strong>
+          <p class="article-nav-title">
+            
+              数组字符串-方法归纳
+            
+          </p>
+        </article>
+      </div>
+    
+    
+      <div id="article-nav-older" class="card-item img">
+        <article>
+          
+            <div class="card-cover" style="background-image: url(/images/9.jpg)"></div>
+          
+          <a class="card-link article-nav-link" href="/2020/09/21/%E4%BC%98%E9%9B%85%E7%9A%84%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0/"></a>
+          <strong class="article-nav-caption">下一篇</strong>
+          <p class="article-nav-title">
+            
+              优雅的代码实现 好的写法 &amp; 不好的写法
+            
+          </p>
+        </article>
+      </div>
+    
+  </div>
+</nav>
+
+      </section>
+
+      
+
+  
+  
+  <div class="valine-container">
+    <div id="valine_thread" class="valine-thread"></div>
+  </div>
+  
+
+  
+  
+
+
+    </div>
+  </article>
+</div>
+
+    <!-- footer container -->
+<footer id="footer" class="footer">
+  <div class="footer-container">
+     
+    <p>&copy; 2020 <a href="/" target="_blank">wujiawen</a></p>
+
+    
+      <p id="hitokoto"></p>
+      <script src="https://v1.hitokoto.cn/?c=a&amp;encode=js&select=%23hitokoto" defer></script>
+    
+
+    
+
+    <p>Powered by <a href="https://hexo.io" target="_blank" rel="noopener noreferrer">Hexo</a> Theme - <a href="https://github.com/miiiku/flex-block" target="_blank" rel="noopener noreferrer author">flex-block</a></p>
+  </div>
+</footer>
+  </div>
+
+  <div class="back-to-top-fixed">
+    <svg class="icon icon-back-to-top" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M725.333333 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8l-213.333333-213.333333c-17.066667-17.066667-17.066667-42.666667 0-59.733333s42.666667-17.066667 59.733333 0l213.333333 213.333333c17.066667 17.066667 17.066667 42.666667 0 59.733333C746.666667 422.4 738.133333 426.666667 725.333333 426.666667z"></path>
+  <path d="M298.666667 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8-17.066667-17.066667-17.066667-42.666667 0-59.733333l213.333333-213.333333c17.066667-17.066667 42.666667-17.066667 59.733333 0s17.066667 42.666667 0 59.733333l-213.333333 213.333333C320 422.4 311.466667 426.666667 298.666667 426.666667z"></path>
+  <path d="M512 896c-25.6 0-42.666667-17.066667-42.666667-42.666667L469.333333 170.666667c0-25.6 17.066667-42.666667 42.666667-42.666667s42.666667 17.066667 42.666667 42.666667l0 682.666667C554.666667 878.933333 537.6 896 512 896z"></path>
+</svg> 
+  </div>
+
+  
+  
+<!-- valine 评论 start -->
+<script type="text/javascript" src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script type="text/javascript" src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script type="text/javascript">
+  new Valine({
+    el: "#valine_thread",
+    appId: "WznapURtFJOd5hb4QxotflLi-gzGzoHsz",
+    appKey: "PlcFdvPHPaWaAtx1Qh7vqEO9",
+    avatar: "robohash",
+    placeholder: "随便说点什么叭～",
+    notify: ,
+    visitor: true,
+    pageSize: 10,
+  });
+</script>
+<!-- valine 评论 end -->
+
+
+
+  <!-- aplayer 音频 start -->
+  <link rel="stylesheet" href="https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.css">
+  <script type="text/javascript" src="https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.js"></script>
+  <script type="text/javascript">
+    const aplayer = document.querySelectorAll(".aplayer");
+    aplayer && initaplayer(aplayer);
+    function initaplayer(els) {
+      let elsArr = Array.from(els);
+      elsArr.forEach(el => {
+        new APlayer({
+          container: el,
+          audio: { ...el.dataset },
+          theme: "#b7daff",
+          lrcType: 3,
+          autoplay: false,
+          loop: false,
+          mutex: true,
+        });
+      });
+    }
+  </script>
+  <!-- aplayer 音频 end -->
+  
+
+<!-- dplayer 视频 start -->
+<script type="text/javascript" src="https://unpkg.com/dplayer@1.25.1/dist/DPlayer.min.js"></script>
+<script type="text/javascript">
+  const dplayer = document.querySelectorAll(".dplayer");
+  dplayer && initDPlayer(dplayer);
+  function initDPlayer(els) {
+    let elsArr = Array.from(els);
+    elsArr.forEach(el => {
+      let url = el.dataset.url;
+      let cover = el.dataset.cover;
+      let subtitle = el.dataset.subtitle;
+
+      let options = {
+        container: el,
+        video: { url: url, pic: cover },
+        theme: "#b7daff",
+        autoplay: true,
+        loop: true,
+        mutex: true,
+      }
+
+      if (subtitle) {
+        options.subtitle = {
+          url: el.dataset.subtitle,
+        }
+      }
+      new DPlayer(options);
+    });
+  }
+</script>
+<!-- dplayer 视频 end -->
+
+
+<!-- waterfall 瀑布流 start -->
+
+<script src="/lib/waterfall.min.js"></script>
+
+<script type="text/javascript">
+
+const waterfalls = document.querySelectorAll(".waterfall-container");
+
+if (waterfalls && waterfalls.length > 0) {
+  waterfalls.forEach((waterfall, index) => {
+    let cls = "waterfall-container-" + index;
+    waterfall.classList.add(cls);
+    initWaterfall(cls, waterfall);
+  });
+}
+
+function initWaterfall(selector, el) {
+  const options = {};
+  if (Object.keys(el.dataset).length > 0) {
+    for (let k in el.dataset) {
+      options[k] = el.dataset[k];
+    }
+  }
+  waterfall(`.${selector}`, options);
+}
+</script>
+<!-- waterfall 瀑布流 end -->
+
+
+  <!-- zoom start -->
+  
+<script src="/lib/zoom.min.js"></script>
+
+  <script type="text/javascript">
+    document.querySelector(".article-content") && zoom(".article-content");
+  </script>
+  <!-- zoom end -->
+  
+
+
+
+  
+
+
+  
+
+
+  
+
+
+
+
+<script src="/js/script.js"></script>
+
+  
+  <!-- 尾部用户自定义相关内容 -->
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":false},"log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
