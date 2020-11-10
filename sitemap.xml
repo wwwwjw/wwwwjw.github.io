@@ -249,6 +249,20 @@
   </url>
   
   <url>
+    <loc>https://jiawen.site/tags/%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1/</loc>
+    <lastmod>2020-11-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://jiawen.site/tags/%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7/</loc>
+    <lastmod>2020-11-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://jiawen.site/tags/%E6%96%87%E4%BB%B6%E4%B8%8B%E8%BD%BD/</loc>
     <lastmod>2020-11-10</lastmod>
     <changefreq>daily</changefreq>
@@ -277,34 +291,6 @@
   </url>
   
   <url>
-    <loc>https://jiawen.site/tags/%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1/</loc>
-    <lastmod>2020-11-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://jiawen.site/tags/%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7/</loc>
-    <lastmod>2020-11-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://jiawen.site/tags/%E5%87%BD%E6%95%B0%E5%AE%9A%E4%B9%89/</loc>
-    <lastmod>2020-11-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://jiawen.site/tags/%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E/</loc>
-    <lastmod>2020-11-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://jiawen.site/tags/%E4%BD%9C%E7%94%A8%E5%9F%9F/</loc>
     <lastmod>2020-11-10</lastmod>
     <changefreq>daily</changefreq>
@@ -326,7 +312,14 @@
   </url>
   
   <url>
-    <loc>https://jiawen.site/tags/JS%E5%8D%95%E7%BA%BF%E7%A8%8B/</loc>
+    <loc>https://jiawen.site/tags/%E5%87%BD%E6%95%B0%E5%AE%9A%E4%B9%89/</loc>
+    <lastmod>2020-11-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://jiawen.site/tags/%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E/</loc>
     <lastmod>2020-11-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -334,6 +327,13 @@
   
   <url>
     <loc>https://jiawen.site/tags/%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF/</loc>
+    <lastmod>2020-11-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://jiawen.site/tags/JS%E5%8D%95%E7%BA%BF%E7%A8%8B/</loc>
     <lastmod>2020-11-10</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
