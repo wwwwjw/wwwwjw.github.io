@@ -160,6 +160,17 @@ dfn {
 .body-container {
   position: relative;
 }
+.vcontent .vemoji {
+  max-width: 56px !important;
+}
+.vemojis i {
+  margin-top: 7px;
+  padding-top: 0px !important;
+  border-radius: 5px;
+}
+.vemojis i:hover {
+  background-color: #e0e0e0;
+}
 .back-to-top-fixed {
   position: fixed;
   background-color: rgba(0,0,0,0.05);
