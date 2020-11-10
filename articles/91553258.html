@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="theme-color" content="#3367D6"/>
+  <link rel="apple-touch-icon" href="/icons-192.png">
+  <link rel="manifest" href="/manifest.json">
+
+  
+
+  
+
+  
+    <meta name="author" content="wujiawen">
+  
+
+  
+
+  
+
+  <title>JS-原理分析-call() | 绝对没有空的</title>
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+    <link href="https://cdn.bootcss.com/highlight.js/9.15.6/styles/monokai.min.css" rel="stylesheet">
+  
+
+  
+<link rel="stylesheet" href="/css/style.css">
+
+<meta name="generator" content="Hexo 5.1.1"></head>
+<body>
+  <div class="root-container">
+    <!-- navbar -->
+<nav class="navbar">
+  <div class="navbar-content">
+    <!-- logo -->
+    <div class="navbar-logo">
+      <a href="/">
+        
+          绝对没有空的
+        
+      </a>
+    </div>
+    <!-- link -->
+    <div class="navbar-link">
+      <div class="navbar-btn">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <ul class="navbar-list">
+        
+          <li class="navbar-list-item"><a href="/">首页</a></li>
+        
+          <li class="navbar-list-item"><a href="/tags">标签</a></li>
+        
+          <li class="navbar-list-item"><a href="/categories">分类</a></li>
+        
+          <li class="navbar-list-item"><a href="/links">友链</a></li>
+        
+          <li class="navbar-list-item"><a href="/about">关于</a></li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    
+<!-- header container -->
+<header class="header-container post">
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+    <div class="header-content">
+      <div class="post-image" style="background-image: url(/images/31.jpg)"></div>
+      <div class="post-text">
+        <div class="type-wrap">
+          <a class="article-category-link" href="/categories/JS/">JS</a>
+        </div>
+        <h1 class="title-wrap">JS-原理分析-call()</h1>
+        <h2 class="title-sub-wrap">
+          <strong>wujiawen</strong>
+          <span>发布于</span>
+          
+  <a href="javascript:;" class="article-date">
+    <time datetime="2020-11-03T03:42:53.428Z" itemprop="datePublished">2020-11-03</time>
+  </a>
+
+        </h2>
+      </div>
+      
+        <div class="valine-visitor" style="color: white;position: absolute;left: 2%;bottom: 15%;">
+          <!-- id 将作为查询条件 -->
+          <span id="/articles/91553258.html" class="leancloud_visitors" data-flag-title="JS-原理分析-call()">
+            <em class="post-meta-item-text">阅读量 </em>
+            <i class="leancloud-visitors-count"></i>
+          </span>
+        </div>
+        
+    </div>
+  
+
+  
+  
+
+  </header>
+
+    <!-- 文章 -->
+
+<!-- 文章内容 -->
+
+<div class="body-container">
+  <article class="content-container article-container">
+    <div class="article-content">
+      
+      
+
+      <section class="article-entry">
+        <h2 id="call-实现原理"><a href="#call-实现原理" class="headerlink" title="call() 实现原理"></a>call() 实现原理</h2><p>call() 方法是Function的原型对象的方法（Function.prototype.call）</p>
+<p>call() 允许为不同的对象分配和调用属于一个对象的函数/方法</p>
+<p>call() 可以改变this的指向（但是这种说法其实并不准确，这是根据作用阐述的通俗易懂的说法，因为this是在执行上下文创建时确定的一个在执行过程中不可更改的变量）</p>
+<p>那么 call() 方法做了什么呢？</p>
+<p>以此调用为例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs javaScript"><span class="hljs-built_in">Object</span>.prototype.toString.call(obj)<br></code></pre></td></tr></table></figure>
+<p>主要做了以下处理：</p>
+<ul>
+<li><p>obj.toString = Object.prototype.toString  将调用的函数设为被指向对象的属性</p>
+</li>
+<li><p>obj.toString()                            执行该函数</p>
+</li>
+<li><p>delete obj.toString                       删除该函数</p>
+</li>
+</ul>
+<p>如此一来，就实现了目标对象没有此函数，却可以通过call方法进行调用</p>
+<p>模拟实现call</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs javaScript"><span class="hljs-built_in">Function</span>.prototype.call = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">context, ...args</span>) </span>&#123;<br>  context = context || <span class="hljs-built_in">window</span><br>  context.fn = <span class="hljs-built_in">this</span>                   <span class="hljs-comment">// 设为目标对象的属性   this 指向调用call的函数</span><br>  <span class="hljs-keyword">const</span> result = context.fn(...args)  <span class="hljs-comment">// 调用目标对象下的该函数</span><br>  <span class="hljs-keyword">delete</span> context.fn                   <span class="hljs-comment">// 删除目标对象下的该函数</span><br>  <span class="hljs-keyword">return</span> result                       <span class="hljs-comment">// 有返回值就返回对应返回值，没有就返回 undefined</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在知道了实现原理的情况下，可以联想到</p>
+<ul>
+<li>call 会出现闭包的情况</li>
+</ul>
+<p>因为 call 会直接将调用call方法的函数的引用赋给目标对象的一个属性<br>而函数在定义时，其定义域就已经确定了，若该函数是内部函数，则有可能会出现闭包的情况<br>（当然，这种情况出现的机率非常小，但是从原理上来讲，是会发生的，取决于如何使用）</p>
+<h2 id="apply-实现原理"><a href="#apply-实现原理" class="headerlink" title="apply() 实现原理"></a>apply() 实现原理</h2><p>apply() 的实现原理与 call() 一样，区别只是参数的传递方式不一样，apply()要求传递数组，而call()则是一个个传递</p>
+<p>模拟实现apply</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs javaScript"><span class="hljs-built_in">Function</span>.prototype.call = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">context, arr</span>) </span>&#123;<br>  context = context || <span class="hljs-built_in">window</span><br>  context.fn = <span class="hljs-built_in">this</span><br>  <span class="hljs-keyword">const</span> result = arr.length ? context.fn(...args) : context.fn()<br>  <span class="hljs-keyword">delete</span> context.fn<br>  <span class="hljs-keyword">return</span> result<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="bind-实现原理"><a href="#bind-实现原理" class="headerlink" title="bind() 实现原理"></a>bind() 实现原理</h2><p>bind() 会返回一个新的函数，此函数会绑定创建它时传入 bind()方法的目标对象（第一个参数）</p>
+<p>若使用 new 关键字调用返回的新函数，则绑定的对象会失效，转为绑定new出来的实例</p>
+<p>模拟实现bind</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs javaScript"><span class="hljs-built_in">Function</span>.prototype.bind = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">context</span>)</span>&#123;<br>  <span class="hljs-keyword">const</span> args = <span class="hljs-built_in">Array</span>.prototype.slice.call(<span class="hljs-built_in">arguments</span>, <span class="hljs-number">1</span>)<br>  <span class="hljs-keyword">const</span> F = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>&#123;&#125;<br>  <span class="hljs-keyword">const</span> self = <span class="hljs-built_in">this</span><br>  bound = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>&#123;<br>      <span class="hljs-keyword">const</span> innerArgs = <span class="hljs-built_in">Array</span>.prototype.slice.call(<span class="hljs-built_in">arguments</span>)<br>      <span class="hljs-keyword">const</span> finalArgs = args.concat(innerArgs)<br>      <span class="hljs-keyword">return</span> self.apply((<span class="hljs-built_in">this</span> <span class="hljs-keyword">instanceof</span> F ? <span class="hljs-built_in">this</span> : context), finalArgs)<br>  &#125;<br>  F.prototype = self.prototype<br>  bound.prototype = <span class="hljs-keyword">new</span> F()<br>  <span class="hljs-keyword">return</span> bound<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>bind传入目标对象后，会return一个函数</p>
+<p>返回的函数，无法再用call() 或 apply()重新绑定新的目标对象</p>
+<ul>
+<li>连续bind()也是无效的</li>
+</ul>
+<p>如：foo.bind(obj1).bind(obj2).bind(obj3) 等同于 foo.bind(obj1)<br>后面的两个bind都是不生效的</p>
+<p>原因嘛，不好表达，大致描述一下下：</p>
+<p>  第一层bind，foo函数绑定了obj1，而bind的内部调用了call/apply，call/apply都会立即执行调用它的函数<br>  第一层bind返回的函数 f1 中，内部是调用apply绑定 foo 与 obj1（foo.apply(obj1)），若执行 f1，会立即执行 foo</p>
+<p>  第二层bind，f1函数绑定了obj2，返回的函数 f2 ，f2中调用apply绑定 f1 与 obj2（f1.apply(obj2)），若执行 f2，会立即执行 f1</p>
+<p>从这里，我们已经可以看出结果了（第三层就不列举了，同样的原理）：</p>
+<p>我们的目标是将 foo函数 与目标对象绑定，然后执行foo函数</p>
+<p>而第二层虽然绑定了 obj2，却是 f1 与 obj2 绑定，无法影响到 foo</p>
+<p>所以有如下的执行链：</p>
+<p>  f2 =&gt; f1(绑定obj2) =&gt; foo(绑定obj1)</p>
+<p>  最终还是会执行 foo，并且，foo函数绑定的还是 obj1</p>
+<p>无论多少层都是一样的结果</p>
+<p>参考文章：<br>  call()、apply() 参考：<br>    <a target="_blank" rel="noopener" href="https://blog.csdn.net/liubangbo/article/details/84098212">https://blog.csdn.net/liubangbo/article/details/84098212</a><br>    <a target="_blank" rel="noopener" href="https://blog.csdn.net/Liu_yunzhao/article/details/90216066">https://blog.csdn.net/Liu_yunzhao/article/details/90216066</a></p>
+<p>  bind() 参考：<br>    <a target="_blank" rel="noopener" href="https://www.cnblogs.com/moqiutao/p/7371988.html">https://www.cnblogs.com/moqiutao/p/7371988.html</a></p>
+
+      </section>
+
+      <section class="article-footer">
+        <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/JS/" rel="tag">#JS</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/apply/" rel="tag">#apply()</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/bind/" rel="tag">#bind()</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/call/" rel="tag">#call()</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90/" rel="tag">#原理分析</a></li></ul>
+      </section>
+
+      <section class="article-navs">
+        
+<nav class="card-container card-article-nav">
+  <div class="card-wrap">
+    
+      <div id="article-nav-newer" class="card-item img">
+        <article>
+          
+            <div class="card-cover" style="background-image: url(/images/32.jpg)"></div>
+          
+          <a class="card-link article-nav-link" href="/articles/31d2099c.html"></a>
+          <strong class="article-nav-caption">上一篇</strong>
+          <p class="article-nav-title">
+            
+              JS-原理分析-toString()
+            
+          </p>
+        </article>
+      </div>
+    
+    
+      <div id="article-nav-older" class="card-item img">
+        <article>
+          
+            <div class="card-cover" style="background-image: url(/images/30.jpg)"></div>
+          
+          <a class="card-link article-nav-link" href="/articles/da993c1f.html"></a>
+          <strong class="article-nav-caption">下一篇</strong>
+          <p class="article-nav-title">
+            
+              sql-建表建库
+            
+          </p>
+        </article>
+      </div>
+    
+  </div>
+</nav>
+
+      </section>
+
+      
+
+  
+  
+  <div class="valine-container">
+    <div id="valine_thread" class="valine-thread"></div>
+  </div>
+  
+
+  
+  
+
+
+    </div>
+  </article>
+</div>
+
+    <!-- footer container -->
+<footer id="footer" class="footer">
+  <div class="footer-container">
+     
+    <p>&copy; 2020 <a href="/" target="_blank">wujiawen</a></p>
+
+    
+      <p id="hitokoto"></p>
+      <script src="https://v1.hitokoto.cn/?c=a&amp;encode=js&select=%23hitokoto" defer></script>
+    
+
+    
+
+    <p>Powered by <a href="https://hexo.io" target="_blank" rel="noopener noreferrer">Hexo</a> Theme - <a href="https://github.com/miiiku/flex-block" target="_blank" rel="noopener noreferrer author">flex-block</a></p>
+  </div>
+</footer>
+  </div>
+
+  <div class="back-to-top-fixed">
+    <svg class="icon icon-back-to-top" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M725.333333 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8l-213.333333-213.333333c-17.066667-17.066667-17.066667-42.666667 0-59.733333s42.666667-17.066667 59.733333 0l213.333333 213.333333c17.066667 17.066667 17.066667 42.666667 0 59.733333C746.666667 422.4 738.133333 426.666667 725.333333 426.666667z"></path>
+  <path d="M298.666667 426.666667c-12.8 0-21.333333-4.266667-29.866667-12.8-17.066667-17.066667-17.066667-42.666667 0-59.733333l213.333333-213.333333c17.066667-17.066667 42.666667-17.066667 59.733333 0s17.066667 42.666667 0 59.733333l-213.333333 213.333333C320 422.4 311.466667 426.666667 298.666667 426.666667z"></path>
+  <path d="M512 896c-25.6 0-42.666667-17.066667-42.666667-42.666667L469.333333 170.666667c0-25.6 17.066667-42.666667 42.666667-42.666667s42.666667 17.066667 42.666667 42.666667l0 682.666667C554.666667 878.933333 537.6 896 512 896z"></path>
+</svg> 
+  </div>
+
+  
+  
+<!-- valine 评论 start -->
+<script type="text/javascript" src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script type="text/javascript" src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script type="text/javascript">
+  new Valine({
+    el: "#valine_thread",
+    appId: "WznapURtFJOd5hb4QxotflLi-gzGzoHsz",
+    appKey: "PlcFdvPHPaWaAtx1Qh7vqEO9",
+    avatar: "mp",
+    placeholder: "随便说点什么叭～",
+    visitor: true,
+    pageSize: 10,
+    emojiCDN: '',
+    emojiMaps: {
+      // 小电视系列
+      "tv_doge": "http://i0.hdslb.com/bfs/emote/6ea59c827c414b4a2955fe79e0f6fd3dcd515e24.png",
+      "tv_亲亲": "http://i0.hdslb.com/bfs/emote/a8111ad55953ef5e3be3327ef94eb4a39d535d06.png",
+      "tv_偷笑": "http://i0.hdslb.com/bfs/emote/bb690d4107620f1c15cff29509db529a73aee261.png",
+      "tv_再见": "http://i0.hdslb.com/bfs/emote/180129b8ea851044ce71caf55cc8ce44bd4a4fc8.png",
+      "tv_冷漠": "http://i0.hdslb.com/bfs/emote/b9cbc755c2b3ee43be07ca13de84e5b699a3f101.png",
+      "tv_发怒": "http://i0.hdslb.com/bfs/emote/34ba3cd204d5b05fec70ce08fa9fa0dd612409ff.png",
+      "tv_发财": "http://i0.hdslb.com/bfs/emote/34db290afd2963723c6eb3c4560667db7253a21a.png",
+      "tv_可爱": "http://i0.hdslb.com/bfs/emote/9e55fd9b500ac4b96613539f1ce2f9499e314ed9.png",
+      "tv_吐血": "http://i0.hdslb.com/bfs/emote/09dd16a7aa59b77baa1155d47484409624470c77.png",
+      "tv_呆": "http://i0.hdslb.com/bfs/emote/fe1179ebaa191569b0d31cecafe7a2cd1c951c9d.png",
+      "tv_呕吐": "http://i0.hdslb.com/bfs/emote/9f996894a39e282ccf5e66856af49483f81870f3.png",
+      "tv_困": "http://i0.hdslb.com/bfs/emote/241ee304e44c0af029adceb294399391e4737ef2.png",
+      "tv_坏笑": "http://i0.hdslb.com/bfs/emote/1f0b87f731a671079842116e0991c91c2c88645a.png",
+      "tv_大佬": "http://i0.hdslb.com/bfs/emote/093c1e2c490161aca397afc45573c877cdead616.png",
+      "tv_大哭": "http://i0.hdslb.com/bfs/emote/23269aeb35f99daee28dda129676f6e9ea87934f.png",
+      "tv_委屈": "http://i0.hdslb.com/bfs/emote/d04dba7b5465779e9755d2ab6f0a897b9b33bb77.png",
+      "tv_害羞": "http://i0.hdslb.com/bfs/emote/a37683fb5642fa3ddfc7f4e5525fd13e42a2bdb1.png",
+      "tv_尴尬": "http://i0.hdslb.com/bfs/emote/7cfa62dafc59798a3d3fb262d421eeeff166cfa4.png",
+      "tv_微笑": "http://i0.hdslb.com/bfs/emote/70dc5c7b56f93eb61bddba11e28fb1d18fddcd4c.png",
+      "tv_思考": "http://i0.hdslb.com/bfs/emote/90cf159733e558137ed20aa04d09964436f618a1.png",
+      "tv_惊吓": "http://i0.hdslb.com/bfs/emote/0d15c7e2ee58e935adc6a7193ee042388adc22af.png",
+      "tv_打脸": "http://i0.hdslb.com/bfs/emote/56ab10b624063e966bfcb76ea5dc4794d87dfd47.png",
+      "tv_抓狂": "http://i0.hdslb.com/bfs/emote/fe31c08edad661d63762b04e17b8d5ae3c71a757.png",
+      "tv_抠鼻": "http://i0.hdslb.com/bfs/emote/c666f55e88d471e51bbd9fab9bb308110824a6eb.png",
+      "tv_斜眼笑": "http://i0.hdslb.com/bfs/emote/911f987aa8bc1bee12d52aafe62bc41ef4474e6c.png",
+      "tv_无奈": "http://i0.hdslb.com/bfs/emote/ea8ed89ee9878f2fece2dda0ea8a5dbfe21b5751.png",
+      "tv_晕": "http://i0.hdslb.com/bfs/emote/5443c22b4d07fb1907ccc610c8e6db254f2461b7.png",
+      "tv_流汗": "http://i0.hdslb.com/bfs/emote/cead1c351ab8d79e9f369605beb90148db0fbed3.png",
+      "tv_流泪": "http://i0.hdslb.com/bfs/emote/7e71cde7858f0cd50d74b0264aa26db612a8a167.png",
+      "tv_流鼻血": "http://i0.hdslb.com/bfs/emote/c32d39db2737f89b904ca32700d140a9241b0767.png",
+      "tv_点赞": "http://i0.hdslb.com/bfs/emote/f85c354995bd99e28fc76c869bfe42ba6438eff4.png",
+      "tv_生气": "http://i0.hdslb.com/bfs/emote/26702dcafdab5e8225b43ffd23c94ac1ff932654.png",
+      "tv_生病": "http://i0.hdslb.com/bfs/emote/8b0ec90e6b86771092a498c54f09fc94621c1900.png",
+      "tv_疑问": "http://i0.hdslb.com/bfs/emote/0793d949b18d7be716078349c202c15ff166f314.png",
+      "tv_白眼": "http://i0.hdslb.com/bfs/emote/c1d59f439e379ee50eef488bcb5e5378e5044ea4.png",
+      "tv_皱眉": "http://i0.hdslb.com/bfs/emote/72ccad6679fea0d14cce648b4d818e09b8ffea2d.png",
+      "tv_目瞪口呆": "http://i0.hdslb.com/bfs/emote/0b8cb81a68de5d5365212c99375e7ace3e7891b7.png",
+      "tv_睡着": "http://i0.hdslb.com/bfs/emote/8b196675b53af58264f383c50ad0945048290b33.png",
+      "tv_笑哭": "http://i0.hdslb.com/bfs/emote/1abc628f6d4f4caf9d0e7800878f4697abbc8273.png",
+      "tv_腼腆": "http://i0.hdslb.com/bfs/emote/89712c0d4af73e67f89e35cbc518420380a7f6f4.png",
+      "tv_色": "http://i0.hdslb.com/bfs/emote/61822c7e9aae5da76475e7892534545336b23a6f.png",
+      "tv_调侃": "http://i0.hdslb.com/bfs/emote/4bc022533ef31544ca0d72c12c808cf4a1cce3e3.png",
+      "tv_调皮": "http://i0.hdslb.com/bfs/emote/b9c41de8e82dd7a8515ae5e3cb63e898bf245186.png",
+      "tv_鄙视": "http://i0.hdslb.com/bfs/emote/6e72339f346a692a495b123174b49e4e8e781303.png",
+      "tv_闭嘴": "http://i0.hdslb.com/bfs/emote/c9e990da7f6e93975e25fd8b70e2e290aa4086ef.png",
+      "tv_难过": "http://i0.hdslb.com/bfs/emote/87f46748d3f142ebc6586ff58860d0e2fc8263ba.png",
+      "tv_馋": "http://i0.hdslb.com/bfs/emote/fc7e829b845c43c623c8b490ee3602b7f0e76a31.png",
+      "tv_鬼脸": "http://i0.hdslb.com/bfs/emote/0ffbbddf8a94d124ca2f54b360bbc04feb6bbfea.png",
+      "tv_黑人问号": "http://i0.hdslb.com/bfs/emote/45821a01f51bc867da9edbaa2e070410819a95b2.png",
+      "tv_鼓掌": "http://i0.hdslb.com/bfs/emote/1d21793f96ef4e6f48b23e53e3b9e42da833a0f6.png",
+      // 蛆音娘系列
+      "蛆音娘-卖萌": "http://i0.hdslb.com/bfs/emote/4cd1024d0c2ecee93224477946656d32c1705ccf.png@112w_112h.webp",
+      "蛆音娘-吃瓜群众": "http://i0.hdslb.com/bfs/emote/5d0d6cc54b508d30b4f50b6b5f7b7e1e259d84ea.png@112w_112h.webp",
+      "蛆音娘-吃惊": "http://i0.hdslb.com/bfs/emote/7a4cb0b644214d476ce198ddf6a7a0aa31311199.png@112w_112h.webp",
+      "蛆音娘-害怕": "http://i0.hdslb.com/bfs/emote/7407634bf67bfe9d7806f15d57608a1b18c2b4c2.png@112w_112h.webp",
+      "蛆音娘-扶额": "http://i0.hdslb.com/bfs/emote/a4d8f95baaa24821fd591a7dbeee1b869e760f59.png@112w_112h.webp",
+      "蛆音娘-滑稽": "http://i0.hdslb.com/bfs/emote/d3717f10ffe9787336bc39a09214270988521a67.png@112w_112h.webp",
+      "蛆音娘-哼": "http://i0.hdslb.com/bfs/emote/8854f1b8a82126e3b87f3a1563da5feb55b23e71.png@112w_112h.webp",
+      "蛆音娘-机智": "http://i0.hdslb.com/bfs/emote/e543c0a823ca915df9362283f4ae950e9e9cc2e9.png@112w_112h.webp",
+      "蛆音娘-哭泣": "http://i0.hdslb.com/bfs/emote/a23055546c19eba663b16370b8e072394d87ff53.png@112w_112h.webp",
+      "蛆音娘-睡觉觉": "http://i0.hdslb.com/bfs/emote/40ef7e6d931acb37e5514b70d13663e86dc3698b.png@112w_112h.webp",
+      "蛆音娘-生气": "http://i0.hdslb.com/bfs/emote/bf398cbbcfaae107d1b59aaf03895f38422e3d87.png@112w_112h.webp",
+      "蛆音娘-偷看": "http://i0.hdslb.com/bfs/emote/52463ded4f23649db10ba3ced662ed946c5edf0b.png@112w_112h.webp",
+      "蛆音娘-吐血": "http://i0.hdslb.com/bfs/emote/5772d22015e5b2b40a9fe302b5967ec7282ac848.png@112w_112h.webp",
+      "蛆音娘-无语": "http://i0.hdslb.com/bfs/emote/b6c763c6484ce2e48299ceb21861e46318868871.png@112w_112h.webp",
+      "蛆音娘-摇头": "http://i0.hdslb.com/bfs/emote/b7278f750c6f2235f41f37056d727f25d3bf781f.png@112w_112h.webp",
+      "蛆音娘-疑问": "http://i0.hdslb.com/bfs/emote/7750b698d15a1b8e83c0f59106e8e9cd5cb57897.png@112w_112h.webp",
+      "蛆音娘-die": "http://i0.hdslb.com/bfs/emote/52543025a070fde5c01a10320c9636ec3173ac99.png@112w_112h.webp",
+      "蛆音娘-OK": "http://i0.hdslb.com/bfs/emote/52a0dcee66c91bf123bf53bd48a269b1317d17f9.png@112w_112h.webp",
+      "蛆音娘-肥皂": "http://i0.hdslb.com/bfs/emote/7f1a857e9430dcf3050ce0ef5fa19aefebea6dc4.png@112w_112h.webp",
+      "蛆音娘-大笑": "http://i0.hdslb.com/bfs/emote/1d3355fb89c24ab3c50e5c152d8b990a290dc63e.png@112w_112h.webp",
+      // 2233娘系列
+      "2233娘-大笑": "http://i0.hdslb.com/bfs/emote/16b8794be990cefa6caeba4d901b934a227ee3b8.png@112w_112h.webp",
+      "2233娘-吃惊": "http://i0.hdslb.com/bfs/emote/d1628c43d35b1530c0504a643ff80b6189fa0a43.png@112w_112h.webp",
+      "2233娘-大哭": "http://i0.hdslb.com/bfs/emote/476a2a60f6e337b8c0697a592e0aa82781f6b33b.png@112w_112h.webp",
+      "2233娘-耶": "http://i0.hdslb.com/bfs/emote/d7178e258a0efc969b65ccc2b1322fb235f5dff4.png@112w_112h.webp",
+      "2233娘-卖萌": "http://i0.hdslb.com/bfs/emote/ea893aa25355de95ab4f03c2dad3f0c58d0c159e.png@112w_112h.webp",
+      "2233娘-疑问": "http://i0.hdslb.com/bfs/emote/0b41f509351958dbb63d472fec0132d1bd03bd14.png@112w_112h.webp",
+      "2233娘-汗": "http://i0.hdslb.com/bfs/emote/247cd9df8cdf84b18368c21e3b2dd374e84c0927.png@112w_112h.webp",
+      "2233娘-困惑": "http://i0.hdslb.com/bfs/emote/714eeb4eae0d0933b4ff08b7df788b1982f6b940.png@112w_112h.webp",
+      "2233娘-怒": "http://i0.hdslb.com/bfs/emote/f31953119c51b9748016440ac0b632f779929b37.png@112w_112h.webp",
+      "2233娘-委屈": "http://i0.hdslb.com/bfs/emote/d9d0bf9d358af8d5761093ec66d4e3f60d963a63.png@112w_112h.webp",
+      "2233娘-郁闷": "http://i0.hdslb.com/bfs/emote/485203fe7100f2c8fc40b2800a18fe20b35f2f1a.png@112w_112h.webp",
+      "2233娘-第一": "http://i0.hdslb.com/bfs/emote/3754ee6e5985bd0bd7dfb668981f2a8733398ebd.png@112w_112h.webp",
+      "2233娘-喝水": "http://i0.hdslb.com/bfs/emote/695bf5429472049b52c1e0de586f8a2511195a23.png@112w_112h.webp",
+      "2233娘-吐魂": "http://i0.hdslb.com/bfs/emote/e999af499edf38a91ca68b1a9d2f97042c1d6734.png@112w_112h.webp",
+      "2233娘-无言": "http://i0.hdslb.com/bfs/emote/fdb5870f32cfaf7949e0f88a13f6feba4a48b719.png@112w_112h.webp",
+    }
+  });
+</script>
+<!-- valine 评论 end -->
+
+
+
+  <!-- aplayer 音频 start -->
+  <link rel="stylesheet" href="https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.css">
+  <script type="text/javascript" src="https://unpkg.com/aplayer@1.10.1/dist/APlayer.min.js"></script>
+  <script type="text/javascript">
+    const aplayer = document.querySelectorAll(".aplayer");
+    aplayer && initaplayer(aplayer);
+    function initaplayer(els) {
+      let elsArr = Array.from(els);
+      elsArr.forEach(el => {
+        new APlayer({
+          container: el,
+          audio: { ...el.dataset },
+          theme: "#b7daff",
+          lrcType: 3,
+          autoplay: false,
+          loop: false,
+          mutex: true,
+        });
+      });
+    }
+  </script>
+  <!-- aplayer 音频 end -->
+  
+
+<!-- dplayer 视频 start -->
+<script type="text/javascript" src="https://unpkg.com/dplayer@1.25.1/dist/DPlayer.min.js"></script>
+<script type="text/javascript">
+  const dplayer = document.querySelectorAll(".dplayer");
+  dplayer && initDPlayer(dplayer);
+  function initDPlayer(els) {
+    let elsArr = Array.from(els);
+    elsArr.forEach(el => {
+      let url = el.dataset.url;
+      let cover = el.dataset.cover;
+      let subtitle = el.dataset.subtitle;
+
+      let options = {
+        container: el,
+        video: { url: url, pic: cover },
+        theme: "#b7daff",
+        autoplay: true,
+        loop: true,
+        mutex: true,
+      }
+
+      if (subtitle) {
+        options.subtitle = {
+          url: el.dataset.subtitle,
+        }
+      }
+      new DPlayer(options);
+    });
+  }
+</script>
+<!-- dplayer 视频 end -->
+
+
+<!-- waterfall 瀑布流 start -->
+
+<script src="/lib/waterfall.min.js"></script>
+
+<script type="text/javascript">
+
+const waterfalls = document.querySelectorAll(".waterfall-container");
+
+if (waterfalls && waterfalls.length > 0) {
+  waterfalls.forEach((waterfall, index) => {
+    let cls = "waterfall-container-" + index;
+    waterfall.classList.add(cls);
+    initWaterfall(cls, waterfall);
+  });
+}
+
+function initWaterfall(selector, el) {
+  const options = {};
+  if (Object.keys(el.dataset).length > 0) {
+    for (let k in el.dataset) {
+      options[k] = el.dataset[k];
+    }
+  }
+  waterfall(`.${selector}`, options);
+}
+</script>
+<!-- waterfall 瀑布流 end -->
+
+
+  <!-- zoom start -->
+  
+<script src="/lib/zoom.min.js"></script>
+
+  <script type="text/javascript">
+    document.querySelector(".article-content") && zoom(".article-content");
+  </script>
+  <!-- zoom end -->
+  
+
+
+
+  
+
+
+  
+
+
+  
+
+
+
+
+<script src="/js/script.js"></script>
+
+  
+  <!-- 尾部用户自定义相关内容 -->
+
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"live2d-widget-model-wanko"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":false},"log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
